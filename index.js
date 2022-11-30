@@ -1,5 +1,5 @@
 // Osa 3b - Sovellus Internettiin
-// Koko sovellus internettiin (Heroku)
+// Frontendin deployauksen suoraviivaistus
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
