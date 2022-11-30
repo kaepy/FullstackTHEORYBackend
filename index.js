@@ -11,6 +11,8 @@
 // node_modules/.bin/nodemon index.js -> sovelluksen käynnistys
 // npm run dev -> npm scripti sovelluksen käynnistämiseen nodemonilla. Poiketen start ja test scripteistä tarvitaan myös run komento.
 // npm install cors -> Cross-origin resource sharing
+// npm run build -> luo tuotanto buildin react sovelluksest
+// cp -r build ../../FullstackTHEORYBackend -> luo kopion buildista backendin alle
 
 
 // express funktio, jota kutsumalla luodaan muuttujaan app sijoitettava Express-sovellusta vastaava olio
@@ -26,6 +28,11 @@ const requestLogger = (request, response, next) => {
   console.log('---')
   next()
 }
+
+// Laitetaan express näyttämään staattista sisältöä
+// Express tarkastaa GET-tyyppisten HTTP-pyyntöjen yhteydessä ensin löytyykö pyynnön polkua vastaavan nimistä tiedostoa hakemistosta build. Jos löytyy, palauttaa Express tiedoston
+// Nyt HTTP GET -pyyntö osoitteeseen www.palvelimenosoite.com/index.html tai www.palvelimenosoite.com näyttää Reactilla tehdyn frontendin. GET-pyynnön esim. osoitteeseen www.palvelimenosoite.com/api/notes hoitaa backendin koodi.
+app.use(express.static('build'))
 
 // Expressin json-parseri on terminologiassa niin sanottu middleware
 // Middlewaret ovat funktioita, joiden avulla voidaan käsitellä request- ja response-olioita.
