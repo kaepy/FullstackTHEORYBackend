@@ -1,5 +1,5 @@
 // Osa 3b - Sovellus Internettiin
-// Siirretään sovellus internettiin (Heroku)
+// Koko sovellus internettiin (Heroku)
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
@@ -13,6 +13,7 @@
 // npm install cors -> Cross-origin resource sharing
 // npm run build -> luo tuotanto buildin react sovelluksest
 // cp -r build ../../FullstackTHEORYBackend -> luo kopion buildista backendin alle
+// git push heroku master
 
 
 // express funktio, jota kutsumalla luodaan muuttujaan app sijoitettava Express-sovellusta vastaava olio
