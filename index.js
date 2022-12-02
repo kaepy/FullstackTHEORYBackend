@@ -15,12 +15,14 @@
 // cp -r build ../../FullstackTHEORYBackend -> luo kopion buildista backendin alle
 // git push heroku master
 // node --inspect index.js -> Chrome DevTools
+// node mongo.js <mongo db pwd>
 
 
 // express funktio, jota kutsumalla luodaan muuttujaan app sijoitettava Express-sovellusta vastaava olio
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const mongoose = require('mongoose')
 
 // Middlewareja voi olla käytössä useita, jolloin ne suoritetaan peräkkäin siinä järjestyksessä, kuin ne on otettu koodissa käyttöön.
 const requestLogger = (request, response, next) => {
@@ -31,24 +33,35 @@ const requestLogger = (request, response, next) => {
   next()
 }
 
-// Laitetaan express näyttämään staattista sisältöä
-// Express tarkastaa GET-tyyppisten HTTP-pyyntöjen yhteydessä ensin löytyykö pyynnön polkua vastaavan nimistä tiedostoa hakemistosta build. Jos löytyy, palauttaa Express tiedoston
-// Nyt HTTP GET -pyyntö osoitteeseen www.palvelimenosoite.com/index.html tai www.palvelimenosoite.com näyttää Reactilla tehdyn frontendin. GET-pyynnön esim. osoitteeseen www.palvelimenosoite.com/api/notes hoitaa backendin koodi.
 app.use(express.static('build'))
-
-// Expressin json-parseri on terminologiassa niin sanottu middleware
-// Middlewaret ovat funktioita, joiden avulla voidaan käsitellä request- ja response-olioita.
-// json-parseri ottaa pyynnön mukana tulevan raakadatan request-oliosta, parsii sen JavaScript-olioksi ja sijoittaa olion request:in kenttään body
 app.use(express.json())
-
-// Middlewaret suoritetaan siinä järjestyksessä, jossa ne on otettu käyttöön sovellusolion metodilla use
-// Middlewaret tulee yleensä ottaa käyttöön ennen routeja
-
-// Otetaan käyttöön middleware requestLogger
 app.use(requestLogger)
-
-// 
 app.use(cors())
+
+
+const password = process.argv[2]
+const url =
+  `mongodb+srv://fullstack:${password}@cluster0.cwjgrzg.mongodb.net/noteApp?retryWrites=true&w=majority`
+
+mongoose.connect(url)
+
+const noteSchema = new mongoose.Schema({
+  content: String,
+  date: Date,
+  important: Boolean,
+})
+
+// Eräs tapa muotoilla Mongoosen palauttamat oliot haluttuun muotoon on muokata kannasta haettavilla olioilla olevan toJSON-metodin palauttamaa muotoa.
+// Vaikka Mongoose-olioiden kenttä _id näyttääkin merkkijonolta, se on todellisuudessa olio. Määrittelemämme metodi toJSON muuttaa sen merkkijonoksi kaiken varalta. Jos emme tekisi muutosta, siitä aiheutuisi ylimääräistä harmia testien yhteydessä.
+noteSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
+})
+
+const Note = mongoose.model('Note', noteSchema)
 
 let notes = [
   {
@@ -71,8 +84,18 @@ let notes = [
   }
 ]
 
+/*
 app.get('/', (req, res) => {
   res.send('<h1>Hello World!</h1>')
+})
+*/
+
+// Palautetaan HTTP-pyynnön vastauksena toJSON-metodin avulla muotoiltuja oliota
+// Nyt siis muuttujassa notes on taulukollinen MongoDB:n palauttamia olioita. Kun taulukko lähetetään JSON-muotoisena vastauksena, jokaisen taulukon olion toJSON-metodia kutsutaan automaattisesti JSON.stringify-metodin toimesta.
+app.get('/api/notes', (request, response) => {
+  Note.find({}).then(notes => {
+    response.json(notes)
+  })
 })
 
 app.get('/api/notes', (req, res) => {
@@ -140,8 +163,8 @@ app.post('/api/notes', (request, response) => {
 
   // Ilman returnin-kutsua koodi jatkaisi suoritusta metodin loppuun asti, ja virheellinen muistiinpano tallettuisi
   if (!body.content) {
-    return response.status(400).json({ 
-      error: 'content missing' 
+    return response.status(400).json({
+      error: 'content missing'
     })
   }
 
