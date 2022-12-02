@@ -14,6 +14,7 @@
 // npm run build -> luo tuotanto buildin react sovelluksest
 // cp -r build ../../FullstackTHEORYBackend -> luo kopion buildista backendin alle
 // git push heroku master
+// node --inspect index.js -> Chrome DevTools
 
 
 // express funktio, jota kutsumalla luodaan muuttujaan app sijoitettava Express-sovellusta vastaava olio
