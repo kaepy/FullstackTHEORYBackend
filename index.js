@@ -1,5 +1,5 @@
 // Osa 3b - Sovellus Internettiin
-// Virheidenkäsittelyn keskittäminen middlewareen
+// Middlewarejen käyttöönottojärjestys ja muut operaatiot
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
@@ -39,17 +39,6 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(cors())
 
-// Virheenkäsittelijä tarkastaa, onko kyse CastError-poikkeuksesta eli virheellisestä olio-id:stä. Jos on, käsittelijä lähettää pyynnön tehneelle selaimelle vastauksen käsittelijän parametrina olevan response-olion avulla. Muussa tapauksessa se siirtää funktiolla next virheen käsittelyn Expressin oletusarvoisen virheidenkäsittelijän hoidettavaksi.
-const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
-
-  if (error.name === 'CastError') {
-    return response.status(400).send({ error: 'malformatted id' })
-  }
-
-  next(error)
-}
-
 // Kaikkien muistiinpanojen näyttäminen
 app.get('/api/notes', (request, response) => {
   Note.find({}).then(notes => {
@@ -75,11 +64,12 @@ app.get('/api/notes/:id', (request, response, next) => {
 })
 
 //Muistiinpanon poistaminen
-app.delete('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id)
-  notes = notes.filter(note => note.id !== id)
-
-  response.status(204).end()
+app.delete('/api/notes/:id', (request, response, next) => {
+  Note.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 
@@ -102,13 +92,43 @@ app.post('/api/notes', (request, response) => {
   })
 })
 
+// Muistiinpanon muokkaaminen
+app.put('/api/notes/:id', (request, response, next) => {
+  const body = request.body
+
+  const note = {
+    content: body.content,
+    important: body.important,
+  }
+
+  // Huom! metodin findByIdAndUpdate parametrina tulee antaa normaali JavaScript-olio eikä uuden olion luomisessa käytettävä Note-konstruktorifunktiolla luotu olio
+  // operaatioon findByIdAndUpdate liittyen, että oletusarvoisesti tapahtumankäsittelijä saa parametrikseen updatedNote päivitetyn olion ennen muutosta olleen tilan
+  // { new: true }, muuttuneen olion palautetuksi kutsujalle
+  Note.findByIdAndUpdate(request.params.id, note, { new: true })
+    .then(updatedNote => {
+      response.json(updatedNote)
+    })
+    .catch(error => next(error))
+})
 
 // saadaan routejen käsittelemättömistä virhetilanteista JSON-muotoinen virheilmoitus
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })
 }
 
+// olemattomien osoitteiden käsittely
 app.use(unknownEndpoint)
+
+// Virheenkäsittelijä tarkastaa, onko kyse CastError-poikkeuksesta eli virheellisestä olio-id:stä. Jos on, käsittelijä lähettää pyynnön tehneelle selaimelle vastauksen käsittelijän parametrina olevan response-olion avulla. Muussa tapauksessa se siirtää funktiolla next virheen käsittelyn Expressin oletusarvoisen virheidenkäsittelijän hoidettavaksi.
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
 
 // tämä tulee kaikkien muiden middlewarejen rekisteröinnin jälkeen!
 app.use(errorHandler)
