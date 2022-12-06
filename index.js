@@ -16,13 +16,17 @@
 // git push heroku master
 // node --inspect index.js -> Chrome DevTools
 // node mongo.js <mongo db pwd>
+// npm install dotenv
+// MONGODB_URI=<osoite> npm run watch -> manuaalinen tapa, mutta .env parempi käytäntö joka tulee muistaa myös ignorata
+// heroku config:set MONGODB_URI='<insert URL>' -> komentoriviltä, mutta parempi tapa asettaa config var herokuun
 
-
+require('dotenv').config()
 // express funktio, jota kutsumalla luodaan muuttujaan app sijoitettava Express-sovellusta vastaava olio
 const express = require('express')
 const app = express()
 const cors = require('cors')
-const mongoose = require('mongoose')
+//const mongoose = require('mongoose')
+const Note = require('./models/note')
 
 // Middlewareja voi olla käytössä useita, jolloin ne suoritetaan peräkkäin siinä järjestyksessä, kuin ne on otettu koodissa käyttöön.
 const requestLogger = (request, response, next) => {
@@ -38,7 +42,7 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(cors())
 
-
+/*
 const password = process.argv[2]
 const url =
   `mongodb+srv://fullstack:${password}@cluster0.cwjgrzg.mongodb.net/noteApp?retryWrites=true&w=majority`
@@ -62,6 +66,7 @@ noteSchema.set('toJSON', {
 })
 
 const Note = mongoose.model('Note', noteSchema)
+*/
 
 let notes = [
   {
@@ -90,16 +95,18 @@ app.get('/', (req, res) => {
 })
 */
 
+/*
+app.get('/api/notes', (req, res) => {
+  res.json(notes)
+})
+*/
+
 // Palautetaan HTTP-pyynnön vastauksena toJSON-metodin avulla muotoiltuja oliota
 // Nyt siis muuttujassa notes on taulukollinen MongoDB:n palauttamia olioita. Kun taulukko lähetetään JSON-muotoisena vastauksena, jokaisen taulukon olion toJSON-metodia kutsutaan automaattisesti JSON.stringify-metodin toimesta.
 app.get('/api/notes', (request, response) => {
   Note.find({}).then(notes => {
     response.json(notes)
   })
-})
-
-app.get('/api/notes', (req, res) => {
-  res.json(notes)
 })
 
 app.get('/api/notes/:id', (request, response) => {
@@ -191,7 +198,7 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
