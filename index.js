@@ -163,7 +163,7 @@ app.post('/api/notes', (request, response) => {
   }
 
   // Muistiinpano-oliot siis luodaan Note-konstruktorifunktiolla
-  const note = newNote({
+  const note = new Note({
     content: body.content,
     // Kentän important arvon ollessa false, tulee lausekkeen body.important || false arvoksi oikean puoleinen false
     // || = OR
