@@ -1,5 +1,5 @@
 // Osa 3b - Sovellus Internettiin
-// Frontendin deployauksen suoraviivaistus
+// Tietokannan käyttö reittien käsittelijöissä
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
@@ -110,22 +110,9 @@ app.get('/api/notes', (request, response) => {
 })
 
 app.get('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id)
-  console.log(id)
-
-  const note = notes.find(note => {
-    // tiiviissä muodossa oleva funktio note => note.id === id kirjoitetaan eksplisiittisen returnin sisältävässä muodossa
-    console.log(note.id, typeof note.id, id, typeof id, note.id === id)
-    return note.id === id
-  })
-  console.log(note)
-
-
-  if (note) {
+  Note.findById(request.params.id).then(note => {
     response.json(note)
-  } else {
-    response.status(404).end()
-  }
+  })
 })
 
 app.delete('/api/notes/:id', (request, response) => {
@@ -160,33 +147,36 @@ app.post('/api/notes', (request, response) => {
 // Parannellaan sovellusta siten, että kenttä content ei saa olla tyhjä. Kentille important ja date asetetaan oletusarvot. Kaikki muut kentät hylätään
 // notes.map(n => n.id) muodostaa taulukon, joka koostuu muistiinpanojen id-kentistä. Math.max palauttaa maksimin sille parametrina annetuista luvuista. notes.map(n => n.id) on kuitenkin taulukko, joten se ei kelpaa parametriksi komennolle Math.max. Taulukko voidaan muuttaa yksittäisiksi luvuiksi käyttäen taulukon spread-syntaksia, eli kolmea pistettä ...taulukko.
 // Spread syntax: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+/*
 const generateId = () => {
   const maxId = notes.length > 0 ? Math.max(...notes.map(n => n.id)) : 0
   return maxId + 1
 }
+*/
 
 app.post('/api/notes', (request, response) => {
   const body = request.body
 
   // Ilman returnin-kutsua koodi jatkaisi suoritusta metodin loppuun asti, ja virheellinen muistiinpano tallettuisi
-  if (!body.content) {
-    return response.status(400).json({
-      error: 'content missing'
-    })
+  if (body.content === undefined) {
+    return response.status(400).json({ error: 'content missing' })
   }
 
-  const note = {
+  // Muistiinpano-oliot siis luodaan Note-konstruktorifunktiolla
+  const note = newNote({
     content: body.content,
     // Kentän important arvon ollessa false, tulee lausekkeen body.important || false arvoksi oikean puoleinen false
     // || = OR
     important: body.important || false,
     date: new Date(),
-    id: generateId(),
-  }
+  })
 
-  notes = notes.concat(note)
+  //notes = notes.concat(note)
 
-  response.json(note)
+  // Pyyntöön vastataan save-operaation takaisinkutsufunktion sisällä. Näin varmistutaan, että operaation vastaus tapahtuu vain, jos operaatio on onnistunut.
+  note.save().then(savedNote => {
+    response.json(savedNote)
+  })
 })
 
 // Esimerkki tapauksesta jossa middreware otetaan käyttöön vasta routejen jälkeen ja tällöin on kyse middlewareista, joita suoritetaan vain, jos mikään route ei käsittele HTTP-pyyntöä.
