@@ -21,14 +21,11 @@
 // heroku config:set MONGODB_URI='<insert URL>' -> komentoriviltä, mutta parempi tapa asettaa config var herokuun
 
 require('dotenv').config()
-// express funktio, jota kutsumalla luodaan muuttujaan app sijoitettava Express-sovellusta vastaava olio
 const express = require('express')
 const app = express()
 const cors = require('cors')
-//const mongoose = require('mongoose')
 const Note = require('./models/note')
 
-// Middlewareja voi olla käytössä useita, jolloin ne suoritetaan peräkkäin siinä järjestyksessä, kuin ne on otettu koodissa käyttöön.
 const requestLogger = (request, response, next) => {
   console.log('Method:', request.method)
   console.log('Path:  ', request.path)
@@ -42,79 +39,38 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(cors())
 
-/*
-const password = process.argv[2]
-const url =
-  `mongodb+srv://fullstack:${password}@cluster0.cwjgrzg.mongodb.net/noteApp?retryWrites=true&w=majority`
-
-mongoose.connect(url)
-
-const noteSchema = new mongoose.Schema({
-  content: String,
-  date: Date,
-  important: Boolean,
-})
-
-// Eräs tapa muotoilla Mongoosen palauttamat oliot haluttuun muotoon on muokata kannasta haettavilla olioilla olevan toJSON-metodin palauttamaa muotoa.
-// Vaikka Mongoose-olioiden kenttä _id näyttääkin merkkijonolta, se on todellisuudessa olio. Määrittelemämme metodi toJSON muuttaa sen merkkijonoksi kaiken varalta. Jos emme tekisi muutosta, siitä aiheutuisi ylimääräistä harmia testien yhteydessä.
-noteSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString()
-    delete returnedObject._id
-    delete returnedObject.__v
-  }
-})
-
-const Note = mongoose.model('Note', noteSchema)
-*/
-
-let notes = [
-  {
-    id: 1,
-    content: "HTML is easy",
-    date: "2022-01-10T17:30:31.098Z",
-    important: true
-  },
-  {
-    id: 2,
-    content: "Browser can execute only Javascript",
-    date: "2022-01-10T18:39:34.091Z",
-    important: false
-  },
-  {
-    id: 3,
-    content: "GET and POST are the most important methods of HTTP protocol",
-    date: "2022-01-10T19:20:14.298Z",
-    important: true
-  }
-]
-
-/*
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World!</h1>')
-})
-*/
-
-/*
-app.get('/api/notes', (req, res) => {
-  res.json(notes)
-})
-*/
-
-// Palautetaan HTTP-pyynnön vastauksena toJSON-metodin avulla muotoiltuja oliota
-// Nyt siis muuttujassa notes on taulukollinen MongoDB:n palauttamia olioita. Kun taulukko lähetetään JSON-muotoisena vastauksena, jokaisen taulukon olion toJSON-metodia kutsutaan automaattisesti JSON.stringify-metodin toimesta.
+// Kaikkien muistiinpanojen näyttäminen
 app.get('/api/notes', (request, response) => {
   Note.find({}).then(notes => {
     response.json(notes)
   })
 })
 
+// Yksittäisen muistiinpanon näyttäminen
 app.get('/api/notes/:id', (request, response) => {
-  Note.findById(request.params.id).then(note => {
-    response.json(note)
-  })
+  Note.findById(request.params.id)
+    .then(note => {
+      if (note) {
+        response.json(note)
+      } else {
+        response.status(404).end()
+      }
+    })
+    /*
+    .catch(error => {
+      console.log(error)
+      response.status(500).end()
+    })
+    */
+    // The request could not be understood by the server due to malformed syntax. The client SHOULD NOT repeat the request without modifications.
+    // Ei ole koskaan huono idea tulostaa poikkeuksen aiheuttanutta olioa konsoliin virheenkäsittelijässä
+    .catch(error => {
+      console.log(error)
+      response.status(400).send({ error: 'malformatted id' })
+    })
 })
 
+//Muistiinpanon poistaminen
 app.delete('/api/notes/:id', (request, response) => {
   const id = Number(request.params.id)
   notes = notes.filter(note => note.id !== id)
@@ -122,64 +78,26 @@ app.delete('/api/notes/:id', (request, response) => {
   response.status(204).end()
 })
 
-// Json-parserin toimintaperiaatteena on, että se ottaa pyynnön mukana olevan JSON-muotoisen datan, muuttaa sen JavaScript-olioksi ja sijoittaa request-olion kenttään body ennen kuin routen käsittelijää kutsutaan.
-// Ilman json-parserin lisäämistä eli komentoa app.use(express.json()) pyynnön kentän body arvo olisi ollut määrittelemätön.
 
-/*
-app.post('/api/notes', (request, response) => {
-  console.log(request.headers)
-
-  // selvitetään olemassa olevista id:istä suurin muuttujan maxId
-  const maxId = notes.length > 0
-    ? Math.max(...notes.map(n => n.id))
-    : 0
-
-  const note = request.body
-  console.log(note)
-  note.id = maxId + 1
-
-  notes = notes.concat(note)
-
-  response.json(note)
-})
-*/
-
-// Parannellaan sovellusta siten, että kenttä content ei saa olla tyhjä. Kentille important ja date asetetaan oletusarvot. Kaikki muut kentät hylätään
-// notes.map(n => n.id) muodostaa taulukon, joka koostuu muistiinpanojen id-kentistä. Math.max palauttaa maksimin sille parametrina annetuista luvuista. notes.map(n => n.id) on kuitenkin taulukko, joten se ei kelpaa parametriksi komennolle Math.max. Taulukko voidaan muuttaa yksittäisiksi luvuiksi käyttäen taulukon spread-syntaksia, eli kolmea pistettä ...taulukko.
-// Spread syntax: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
-/*
-const generateId = () => {
-  const maxId = notes.length > 0 ? Math.max(...notes.map(n => n.id)) : 0
-  return maxId + 1
-}
-*/
-
+// Muistiinpanon luominen
 app.post('/api/notes', (request, response) => {
   const body = request.body
 
-  // Ilman returnin-kutsua koodi jatkaisi suoritusta metodin loppuun asti, ja virheellinen muistiinpano tallettuisi
   if (body.content === undefined) {
     return response.status(400).json({ error: 'content missing' })
   }
 
-  // Muistiinpano-oliot siis luodaan Note-konstruktorifunktiolla
   const note = new Note({
     content: body.content,
-    // Kentän important arvon ollessa false, tulee lausekkeen body.important || false arvoksi oikean puoleinen false
-    // || = OR
     important: body.important || false,
     date: new Date(),
   })
 
-  //notes = notes.concat(note)
-
-  // Pyyntöön vastataan save-operaation takaisinkutsufunktion sisällä. Näin varmistutaan, että operaation vastaus tapahtuu vain, jos operaatio on onnistunut.
   note.save().then(savedNote => {
     response.json(savedNote)
   })
 })
 
-// Esimerkki tapauksesta jossa middreware otetaan käyttöön vasta routejen jälkeen ja tällöin on kyse middlewareista, joita suoritetaan vain, jos mikään route ei käsittele HTTP-pyyntöä.
 
 // saadaan routejen käsittelemättömistä virhetilanteista JSON-muotoinen virheilmoitus
 const unknownEndpoint = (request, response) => {
