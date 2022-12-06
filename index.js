@@ -1,5 +1,5 @@
 // Osa 3b - Sovellus Internettiin
-// Tietokannan käyttö reittien käsittelijöissä
+// Virheidenkäsittelyn keskittäminen middlewareen
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
@@ -39,6 +39,17 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(cors())
 
+// Virheenkäsittelijä tarkastaa, onko kyse CastError-poikkeuksesta eli virheellisestä olio-id:stä. Jos on, käsittelijä lähettää pyynnön tehneelle selaimelle vastauksen käsittelijän parametrina olevan response-olion avulla. Muussa tapauksessa se siirtää funktiolla next virheen käsittelyn Expressin oletusarvoisen virheidenkäsittelijän hoidettavaksi.
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+
 // Kaikkien muistiinpanojen näyttäminen
 app.get('/api/notes', (request, response) => {
   Note.find({}).then(notes => {
@@ -47,7 +58,7 @@ app.get('/api/notes', (request, response) => {
 })
 
 // Yksittäisen muistiinpanon näyttäminen
-app.get('/api/notes/:id', (request, response) => {
+app.get('/api/notes/:id', (request, response, next) => {
   Note.findById(request.params.id)
     .then(note => {
       if (note) {
@@ -56,18 +67,11 @@ app.get('/api/notes/:id', (request, response) => {
         response.status(404).end()
       }
     })
-    /*
-    .catch(error => {
-      console.log(error)
-      response.status(500).end()
-    })
-    */
-    // The request could not be understood by the server due to malformed syntax. The client SHOULD NOT repeat the request without modifications.
-    // Ei ole koskaan huono idea tulostaa poikkeuksen aiheuttanutta olioa konsoliin virheenkäsittelijässä
-    .catch(error => {
-      console.log(error)
-      response.status(400).send({ error: 'malformatted id' })
-    })
+
+    // Eteenpäin siirrettävä virhe annetaan funktiolle next parametrina. Jos funktiota next kutsuttaisiin ilman parametria, käsittely siirtyisi ainoastaan eteenpäin seuraavaksi määritellylle routelle tai middlewarelle. Jos funktion next kutsussa annetaan parametri, siirtyy käsittely virheidenkäsittelymiddlewarelle.
+    .catch(error => { next(error) })
+    // console.log(error)
+    // response.status(400).send({ error: 'malformatted id' })
 })
 
 //Muistiinpanon poistaminen
@@ -105,6 +109,9 @@ const unknownEndpoint = (request, response) => {
 }
 
 app.use(unknownEndpoint)
+
+// tämä tulee kaikkien muiden middlewarejen rekisteröinnin jälkeen!
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
