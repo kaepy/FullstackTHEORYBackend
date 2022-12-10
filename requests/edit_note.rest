@@ -1,6 +1,0 @@
-PUT http://localhost:3001/api/notes/638f8c6291462484a4b11856
-
-{
-    "content": "lol",
-    "important": true
-}

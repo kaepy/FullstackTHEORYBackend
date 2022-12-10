@@ -1,5 +1,6 @@
 // Osa 3d - Validointi ja ESLint
-// Tietokantaa käyttävän version vieminen tuotantoon
+// Lint -
+// JavaScript-maailmassa tämän hetken johtava työkalu staattiseen analyysiin eli "linttaukseen" on ESLint
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
@@ -19,6 +20,8 @@
 // npm install dotenv -> luo .env & päivitä .gitignore
 // MONGODB_URI=<osoite> npm run watch -> manuaalinen tapa, mutta .env parempi käytäntö joka tulee muistaa myös ignorata
 // heroku config:set MONGODB_URI='<insert URL>' -> komentoriviltä, mutta parempi tapa asettaa config var herokuun
+// npm install eslint --save-dev -> ESLint backendiin kehitysaikaiseksi riippuvuudeksi
+// npx eslint --init -> muodostetaan alustava ESLint-konfiguraatio
 
 require('dotenv').config()
 const express = require('express')

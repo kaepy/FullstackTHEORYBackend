@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 // Mongoose: the `strictQuery` option will be switched back to `false` by default in Mongoose 7
-mongoose.set('strictQuery', false);
+mongoose.set('strictQuery', false)
 
 const url = process.env.MONGODB_URI
 
