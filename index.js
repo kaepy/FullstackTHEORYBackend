@@ -1,5 +1,5 @@
 // Osa 3d - Validointi ja ESLint
-// Mongoose validointi
+// Tietokantaa käyttävän version vieminen tuotantoon
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
