@@ -1,5 +1,5 @@
-// Osa 3b - Sovellus Internettiin
-// Middlewarejen käyttöönottojärjestys ja muut operaatiot
+// Osa 3d - Validointi ja ESLint
+// Mongoose validointi
 
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
@@ -16,7 +16,7 @@
 // git push heroku master
 // node --inspect index.js -> Chrome DevTools
 // node mongo.js <mongo db pwd>
-// npm install dotenv
+// npm install dotenv -> luo .env & päivitä .gitignore
 // MONGODB_URI=<osoite> npm run watch -> manuaalinen tapa, mutta .env parempi käytäntö joka tulee muistaa myös ignorata
 // heroku config:set MONGODB_URI='<insert URL>' -> komentoriviltä, mutta parempi tapa asettaa config var herokuun
 
@@ -59,8 +59,8 @@ app.get('/api/notes/:id', (request, response, next) => {
 
     // Eteenpäin siirrettävä virhe annetaan funktiolle next parametrina. Jos funktiota next kutsuttaisiin ilman parametria, käsittely siirtyisi ainoastaan eteenpäin seuraavaksi määritellylle routelle tai middlewarelle. Jos funktion next kutsussa annetaan parametri, siirtyy käsittely virheidenkäsittelymiddlewarelle.
     .catch(error => { next(error) })
-    // console.log(error)
-    // response.status(400).send({ error: 'malformatted id' })
+  // console.log(error)
+  // response.status(400).send({ error: 'malformatted id' })
 })
 
 //Muistiinpanon poistaminen
@@ -74,12 +74,8 @@ app.delete('/api/notes/:id', (request, response, next) => {
 
 
 // Muistiinpanon luominen
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', (request, response, next) => {
   const body = request.body
-
-  if (body.content === undefined) {
-    return response.status(400).json({ error: 'content missing' })
-  }
 
   const note = new Note({
     content: body.content,
@@ -90,24 +86,29 @@ app.post('/api/notes', (request, response) => {
   note.save().then(savedNote => {
     response.json(savedNote)
   })
+    .catch(error => next(error))
 })
 
-// Muistiinpanon muokkaaminen
+// Muistiinpanon tärkeyden muokkaaminen
 app.put('/api/notes/:id', (request, response, next) => {
-  const body = request.body
+  const { content, important } = request.body
 
+  /*
   const note = {
     content: body.content,
     important: body.important,
   }
 
-  // Huom! metodin findByIdAndUpdate parametrina tulee antaa normaali JavaScript-olio eikä uuden olion luomisessa käytettävä Note-konstruktorifunktiolla luotu olio
-  // operaatioon findByIdAndUpdate liittyen, että oletusarvoisesti tapahtumankäsittelijä saa parametrikseen updatedNote päivitetyn olion ennen muutosta olleen tilan
-  // { new: true }, muuttuneen olion palautetuksi kutsujalle
   Note.findByIdAndUpdate(request.params.id, note, { new: true })
     .then(updatedNote => {
       response.json(updatedNote)
     })
+    .catch(error => next(error))
+  */
+
+  // Mongoosen sisäänrakennettua validaatiota ei suoriteta oletusarvoisesti metodin findOneAndUpdate suorituksen yhteydessä
+  Note.findByIdAndUpdate(request.params.id, { content, important }, { new: true, runValidators: true, context: 'query' })
+    .then(updatedNote => { response.json(updatedNote) })
     .catch(error => next(error))
 })
 
@@ -125,6 +126,8 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
 
   next(error)

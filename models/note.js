@@ -1,8 +1,12 @@
 const mongoose = require('mongoose')
 
+// Mongoose: the `strictQuery` option will be switched back to `false` by default in Mongoose 7
+mongoose.set('strictQuery', false);
+
 const url = process.env.MONGODB_URI
 
 console.log('connecting to', url)
+
 mongoose.connect(url)
   .then(result => {
     console.log('connected to MongoDB')
@@ -12,8 +16,15 @@ mongoose.connect(url)
   })
 
 const noteSchema = new mongoose.Schema({
-  content: String,
-  date: Date,
+  content: {
+    type: String,
+    minlength: 5,
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
+  },
   important: Boolean,
 })
 
