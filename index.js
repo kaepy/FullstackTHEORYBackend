@@ -69,12 +69,11 @@ app.get('/api/notes/:id', (request, response, next) => {
 //Muistiinpanon poistaminen
 app.delete('/api/notes/:id', (request, response, next) => {
   Note.findByIdAndRemove(request.params.id)
-    .then(result => {
+    .then(() => {
       response.status(204).end()
     })
     .catch(error => next(error))
 })
-
 
 // Muistiinpanon luominen
 app.post('/api/notes', (request, response, next) => {
