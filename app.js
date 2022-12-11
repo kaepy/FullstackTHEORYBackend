@@ -25,6 +25,7 @@ app.use(express.json())
 app.use(middleware.requestLogger)
 
 // Mahdollistaa routerin lyhyet polut
+// Export esimerkki 1 *..., joten mahdollisia käyttötapoja on vain yksi
 app.use('/api/notes', notesRouter)
 
 // Olemattomien osoitteiden käsittely

@@ -1,4 +1,25 @@
+//  EXPORT ESIMERKKI 1:
+// Exportataan ainoastaan yksi "asia" (tässä tilanteessa router-olio) sijoitetaan muuttujaan ja käytetään sitä sellaisenaan,...*
 const notesRouter = require('express').Router()
+// app.use('/api/notes', notesRouter)
+
+/* EXPORT ESIMERKKI 2:
+// Otetaan käyttöön koko eksportoitava olio, jolloin funktioihin viitataan olion kautta
+const logger = require('./utils/logger')
+
+logger.info('message')
+
+logger.error('error message')
+*/
+
+/* EXPORT ESIMERKKI 2:
+// destrukturoida funktiot omiin muuttujiin require-kutsun yhteydessä
+const { info, error } = require('./utils/logger')
+
+info('message')
+error('error message')
+*/
+
 const Note = require('../models/note')
 
 // Tiedosto eksporttaa moduulin käyttäjille määritellyn routerin.
@@ -72,4 +93,5 @@ notesRouter.put('/:id', (request, response, next) => {
     .catch(error => next(error))
 })
 
+// EXPORT ESIMERKKI 1 liittyvää...
 module.exports = notesRouter
