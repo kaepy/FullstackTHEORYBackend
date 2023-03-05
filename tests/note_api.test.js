@@ -1,49 +1,23 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const helper = require('./test_helper')
 const app = require('../app')
+const api = supertest(app)
+
 const Note = require('../models/note')
 
 // npm test -- tests/note_api.test.js // tiedoston perusteella
 // npm test -- -t 'a specific note is within the returned notes' // testin nimen perusteella
 // npm test -- -t 'notes' // kaikki testit, joiden nimessä on sana notes
-// HUOM: yksittäisiä testejä suoritettaessa saattaa Mongoose-yhteys jäädä auki, mikäli yhtään yhteyttä hyödyntävää testiä ei ajeta. Ongelma seurannee siitä, että SuperTest alustaa yhteyden, mutta Jest ei suorita afterAll-osiota.
-
-// superagent-olio mahdollistaa testien HTTP-pyynnöt backendille
-// "if the server is not already listening for connections then it is bound to an ephemeral port for you so there is no need to keep track of ports.""
-const api = supertest(app)
-
-const initialNotes = [
-  {
-    content: 'HTML is easy',
-    important: false,
-  },
-  {
-    content: 'Browser can execute only JavaScript',
-    important: true,
-  },
-]
-
-// Async- ja await ovat ES7:n mukanaan tuoma uusi syntaksi, joka mahdollistaa promisen palauttavien asynkronisten funktioiden kutsumisen siten, että kirjoitettava koodi näyttää synkroniselta
-
-// Esimerkki
-/*
-const main = async () => {
-  const notes = await Note.find({})
-  console.log('operaatio palautti seuraavat muistiinpanot', notes)
-
-  const response = await notes[0].remove()
-  console.log('the first note is removed')
-}
-
-main()
-*/
 
 // alustetaan tietokanta ennen jokaisen testin suoritusta
 beforeEach(async () => {
   await Note.deleteMany({})
-  let noteObject = new Note(initialNotes[0])
+
+  let noteObject = new Note(helper.initialNotes[0])
   await noteObject.save()
-  noteObject = new Note(initialNotes[1])
+
+  noteObject = new Note(helper.initialNotes[1])
   await noteObject.save()
 })
 
@@ -51,29 +25,13 @@ test('notes are returned as json', async () => {
   await api
     .get('/api/notes')
     .expect(200)
-    .expect('Content-Type', /application\/json/) // regex mahdollistaa että headeri voi sisältää muutakin tekstiä eikä tyyppiä tarvitse määrittää pilkulleen oikein
+    .expect('Content-Type', /application\/json/)
 })
-
-/*
-test('there are two notes', async () => {
-  const response = await api.get('/api/notes')
-
-  // tänne tullaan vasta kun edellinen komento eli HTTP-pyyntö on suoritettu
-  // muuttujassa response on nyt HTTP-pyynnön tulos
-  expect(response.body).toHaveLength(2)
-})
-
-test('the first note is about HTTP methods', async () => {
-  const response = await api.get('/api/notes')
-
-  expect(response.body[0].content).toBe('HTML is easy')
-})
-*/
 
 test('all notes are returned', async () => {
   const response = await api.get('/api/notes')
 
-  expect(response.body).toHaveLength(initialNotes.length)
+  expect(response.body).toHaveLength(helper.initialNotes.length)
 })
 
 test('a specific note is within the returned notes', async () => {
@@ -86,6 +44,43 @@ test('a specific note is within the returned notes', async () => {
   expect(contents).toContain(
     'Browser can execute only JavaScript'
   )
+})
+
+test('a valid note can be added ', async () => {
+  const newNote = {
+    content: 'async/await simplifies making async calls',
+    important: true,
+  }
+
+  await api
+    .post('/api/notes')
+    .send(newNote)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  // tarkastetaan mihin tilaan tietokanta on päätynyt haun seurauksena
+  const notesAtEnd = await helper.notesInDb()
+  expect(notesAtEnd).toHaveLength(helper.initialNotes.length + 1)
+
+  const contents = notesAtEnd.map(n => n.content)
+  expect(contents).toContain(
+    'async/await simplifies making async calls'
+  )
+})
+
+test('note without content is not added', async () => {
+  const newNote = {
+    important: true
+  }
+
+  await api
+    .post('/api/notes')
+    .send(newNote)
+    .expect(400)
+
+  const notesAtEnd = await helper.notesInDb()
+
+  expect(notesAtEnd).toHaveLength(helper.initialNotes.length)
 })
 
 afterAll(async () => {
