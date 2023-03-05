@@ -44,7 +44,7 @@ notesRouter.post('/', async (request, response) => {
   })
 
   const savedNote = await note.save()
-  response.json(savedNote)
+  response.status(201).json(savedNote)
 })
 
 // Yksittäisen muistiinpanon näyttäminen
@@ -53,7 +53,7 @@ notesRouter.get('/:id', async (request, response) => {
   if (note) {
     response.json(note)
   } else {
-    response.status(201).json(savedNote)
+    response.status(404).json(savedNote)
   }
 })
 
