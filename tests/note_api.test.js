@@ -3,9 +3,10 @@ const supertest = require('supertest')
 const app = require('../app')
 const Note = require('../models/note')
 
-// npm test -- tests/note_api.test.js
-// npm test -- -t 'a specific note is within the returned notes'
-// npm test -- -t 'notes'
+// npm test -- tests/note_api.test.js // tiedoston perusteella
+// npm test -- -t 'a specific note is within the returned notes' // testin nimen perusteella
+// npm test -- -t 'notes' // kaikki testit, joiden nimessä on sana notes
+// HUOM: yksittäisiä testejä suoritettaessa saattaa Mongoose-yhteys jäädä auki, mikäli yhtään yhteyttä hyödyntävää testiä ei ajeta. Ongelma seurannee siitä, että SuperTest alustaa yhteyden, mutta Jest ei suorita afterAll-osiota.
 
 // superagent-olio mahdollistaa testien HTTP-pyynnöt backendille
 // "if the server is not already listening for connections then it is bound to an ephemeral port for you so there is no need to keep track of ports.""
