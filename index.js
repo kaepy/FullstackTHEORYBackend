@@ -1,6 +1,3 @@
-// Osa 4a - Sovelluksen rakenne ja testauksen alkeet
-// Sovelluksen rakenne Noden yleisen konvention mukaiseksi
-
 const app = require('./app') // varsinainen Express-sovellus
 const http = require('http')
 const config = require('./utils/config')
