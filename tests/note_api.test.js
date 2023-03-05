@@ -23,6 +23,21 @@ const initialNotes = [
   },
 ]
 
+// Async- ja await ovat ES7:n mukanaan tuoma uusi syntaksi, joka mahdollistaa promisen palauttavien asynkronisten funktioiden kutsumisen siten, että kirjoitettava koodi näyttää synkroniselta
+
+// Esimerkki
+/*
+const main = async () => {
+  const notes = await Note.find({})
+  console.log('operaatio palautti seuraavat muistiinpanot', notes)
+
+  const response = await notes[0].remove()
+  console.log('the first note is removed')
+}
+
+main()
+*/
+
 // alustetaan tietokanta ennen jokaisen testin suoritusta
 beforeEach(async () => {
   await Note.deleteMany({})
