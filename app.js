@@ -9,6 +9,7 @@ const notesRouter = require('./controllers/notes')
 const middleware = require('./utils/middleware')
 const logger = require('./utils/logger')
 const mongoose = require('mongoose')
+const usersRouter = require('./controllers/users')
 
 logger.info('connecting to', config.MONGODB_URI)
 
@@ -28,6 +29,7 @@ app.use(middleware.requestLogger)
 // Mahdollistaa routerin lyhyet polut
 // Export esimerkki 1 *..., joten mahdollisia käyttötapoja on vain yksi
 app.use('/api/notes', notesRouter)
+app.use('/api/users', usersRouter)
 
 // Olemattomien osoitteiden käsittely
 app.use(middleware.unknownEndpoint)

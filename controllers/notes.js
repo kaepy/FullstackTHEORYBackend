@@ -28,7 +28,7 @@ const Note = require('../models/note')
 // Router on siis middleware, jonka avulla on mahdollista määritellä joukko "toisiinsa liittyviä" routeja yhdessä paikassa, yleensä omassa moduulissaan.
 
 // Kaikkien muistiinpanojen näyttäminen async funktion avulla
-notesRouter.get('/', async(request, response) => {
+notesRouter.get('/', async (request, response) => {
   Note.find({}).then(notes => {
     response.json(notes)
   })
