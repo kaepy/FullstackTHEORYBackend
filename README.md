@@ -1,6 +1,7 @@
 Heroku: https://sleepy-headland-05941.herokuapp.com/
 
 ## Muistiinpanot
+
 // node index.js -> suorittaa tiedoston
 // npm start -> "start": "node index.js",
 // npm install express -> asentaa transitiivisen riippuvuuden "Express" node_modules kansioon
@@ -21,3 +22,5 @@ Heroku: https://sleepy-headland-05941.herokuapp.com/
 // heroku config:set MONGODB_URI='<insert URL>' -> komentoriviltä, mutta parempi tapa asettaa config var herokuun
 // npm install eslint --save-dev -> ESLint backendiin kehitysaikaiseksi riippuvuudeksi
 // npx eslint --init -> muodostetaan alustava ESLint-konfiguraatio
+// heroku logs --tail 
+// rm -rv node_modules
