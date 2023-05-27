@@ -6,7 +6,7 @@ const api = supertest(app)
 
 const Note = require('../models/note')
 
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcrypt')
 const User = require('../models/user')
 
 // npm test -- tests/note_api.test.js // tiedoston perusteella
