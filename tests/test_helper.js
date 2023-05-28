@@ -51,6 +51,8 @@ const testUserToken = async () => {
     id: testUser.id,
   }
 
+  // Salasanaa ei tarvita - pelkkä token riittää
+  // Epäselvää miksi tämä nyt riittää pelkästään
   const token = jwt.sign(
     userForToken,
     process.env.SECRET,
