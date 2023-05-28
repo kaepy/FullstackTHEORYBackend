@@ -21,10 +21,15 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message })
+  } else if (error.name ===  'JsonWebTokenError') {
+    // Jos tokenia ei ole tai se on epävalidi, syntyy poikkeus JsonWebTokenError.
+    return response.status(400).json({ error: 'token missing or invalid' })
   }
 
   next(error)
 }
+
+// Jos sovelluksessa on useampia rajapintoja jotka vaativat kirjautumisen, kannattaa JWT:n validointi eriyttää omaksi middlewarekseen, tai käyttää jotain jo olemassa olevaa kirjastoa kuten express-jwt
 
 module.exports = {
   requestLogger,

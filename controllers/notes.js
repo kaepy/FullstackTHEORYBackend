@@ -23,10 +23,20 @@ error('error message')
 const Note = require('../models/note')
 const User = require('../models/user')
 
+const jwt = require('jsonwebtoken')
+
 // Tiedosto eksporttaa moduulin käyttäjille määritellyn routerin.
 //Kaikki määriteltävät routet liitetään router-olioon, samaan tapaan kuin aiemmassa versiossa routet liitettiin sovellusta edustavaan olioon.
 // Huomaa typistetyt polut routeissa!
 // Router on siis middleware, jonka avulla on mahdollista määritellä joukko "toisiinsa liittyviä" routeja yhdessä paikassa, yleensä omassa moduulissaan.
+
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if (authorization && authorization.startsWith('Bearer ')) {
+    return authorization.replace('Bearer ', '')
+  }
+  return null
+}
 
 // Kaikkien muistiinpanojen näyttäminen async funktion avulla
 notesRouter.get('/', async (request, response) => {
@@ -45,7 +55,17 @@ notesRouter.get('/', async (request, response) => {
 notesRouter.post('/', async (request, response) => {
   const body = request.body
 
-  const user = await User.findById(body.userId)
+  // Apufunktio getTokenFrom eristää tokenin headerista authorization. Tokenin oikeellisuus varmistetaan metodilla jwt.verify. Metodi myös dekoodaa tokenin, eli palauttaa olion, jonka perusteella token on laadittu. Tokenista dekoodatun olion sisällä on kentät username ja id eli se kertoo palvelimelle kuka pyynnön on tehnyt.
+  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+
+  // Jos token on muuten kunnossa, mutta tokenista dekoodattu olio ei sisällä käyttäjän identiteettiä (eli decodedToken.id ei ole määritelty), palautetaan virheestä kertova statuskoodi 401 unauthorized ja kerrotaan syy vastauksen bodyssä
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
+  // Kun pyynnön tekijän identiteetti on selvillä, jatkuu suoritus entiseen tapaan.
+
+  // const user = await User.findById(body.userId)
+  const user = await User.findById(decodedToken.id)
 
   const note = new Note({
     content: body.content,
