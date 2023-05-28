@@ -1,8 +1,7 @@
 const mongoose = require('mongoose')
 
-// Mongoose: the `strictQuery` option will be switched back to `false` by default in Mongoose 7
-// mongoose.set('strictQuery', false)
-
+// Tietokannan tasolla ei siis ole mitään määrittelyä sille, että esim. muistiinpanojen kenttään user talletetut id:t viittaavat users-kokoelman dokumentteihin.
+// Mongoosen populate-funktion toiminnallisuus perustuu siihen, että olemme määritelleet viitteiden "tyypit" olioiden Mongoose-skeemaan ref-kentän avulla
 const noteSchema = new mongoose.Schema({
   content: {
     type: String,

@@ -36,7 +36,7 @@ const note = new Note({
 
 // mongo.js käyttö: node mongo.js <insert password>
 
-note.save().then(result => {
+note.save().then(() => {
   console.log('note saved!')
   mongoose.connection.close()
 })

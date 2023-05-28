@@ -21,6 +21,7 @@ error('error message')
 */
 
 const Note = require('../models/note')
+const User = require('../models/user')
 
 // Tiedosto eksporttaa moduulin käyttäjille määritellyn routerin.
 //Kaikki määriteltävät routet liitetään router-olioon, samaan tapaan kuin aiemmassa versiossa routet liitettiin sovellusta edustavaan olioon.
@@ -29,21 +30,45 @@ const Note = require('../models/note')
 
 // Kaikkien muistiinpanojen näyttäminen async funktion avulla
 notesRouter.get('/', async (request, response) => {
-  Note.find({}).then(notes => {
-    response.json(notes)
-  })
+  //Note.find({}).then(notes => {
+  //  response.json(notes)
+  //})
+
+  // käyttäjän tietojen populointi
+  const notes = await Note
+    .find({}).populate('user', { username: 1, name: 1 })
+
+  response.json(notes)
 })
 
 // Muistiinpanon luominen
 notesRouter.post('/', async (request, response) => {
   const body = request.body
 
+  const user = await User.findById(body.userId)
+
   const note = new Note({
     content: body.content,
     important: body.important || false,
+    date: new Date(),
+    user: user._id
   })
 
   const savedNote = await note.save()
+
+  // userin noteihin lisätään vaan uus id, mutta se tehään concatilla koska se luo uuden arrayn sen concatenoinnin tuloksesta jolloin se ei peukaloi sitä alkuperästä user.notes arraytä, mikä kävis jos tässä käytettäs sitä .push()
+  // concat funktio luo/palauttaa arrayn, eikä muokkaa mitään niiku push tekee
+  // Sama avattuna 1:
+  // const uudetNotet = [] // luodaan uusi tyhjä array noteille
+  // uudetNotet.push(...user.notes) // lisätään aluperäset notet
+  // uudetNotet.push(savedNote._id); // lisätään uusi note
+  // user.notes = uudetNotet; // laitetaan uudet notet userille
+  // Sama avattuna 2:
+  // const uudetNotet = user.notes.concat(savedNote._id)
+  // user.notes = uudetNotet
+  user.notes = user.notes.concat(savedNote._id)
+  await user.save()
+
   response.status(201).json(savedNote)
 })
 
