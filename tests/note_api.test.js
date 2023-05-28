@@ -14,9 +14,13 @@ const User = require('../models/user')
 // npm test -- -t 'notes' // kaikki testit, joiden nimessä on sana notes
 
 describe('when there is initially some notes saved', () => {
+
   beforeEach(async () => {
     await Note.deleteMany({})
     await Note.insertMany(helper.initialNotes)
+
+    await User.deleteMany({})
+    await User.insertMany(helper.initialUsers)
   })
 
   test('notes are returned as json', async () => {
@@ -45,7 +49,6 @@ describe('when there is initially some notes saved', () => {
 
     test('succeeds with a valid id', async () => {
       const notesAtStart = await helper.notesInDb()
-
       const noteToView = notesAtStart[0]
 
       const resultNote = await api
@@ -59,7 +62,7 @@ describe('when there is initially some notes saved', () => {
     test('fails with statuscode 404 if note does not exist', async () => {
       const validNonexistingId = await helper.nonExistingId()
 
-      console.log(validNonexistingId)
+      //console.log(validNonexistingId)
 
       await api
         .get(`/api/notes/${validNonexistingId}`)
@@ -76,14 +79,18 @@ describe('when there is initially some notes saved', () => {
   })
 
   describe('addition of a new note', () => {
+
     test('succeeds with valid data', async () => {
       const newNote = {
         content: 'async/await simplifies making async calls',
         important: true,
       }
 
+      const authToken = await helper.testUserToken()
+
       await api
         .post('/api/notes')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(newNote)
         .expect(201)
         .expect('Content-Type', /application\/json/)
@@ -133,10 +140,11 @@ describe('when there is initially some notes saved', () => {
 
 describe('when there is initially one user at db', () => {
   beforeEach(async () => {
+    // TÄTÄ VOIS VÄHÄN REFAKTOROIDA, KOSKA USERIEN ALUSTUS LISÄTTY!
     await User.deleteMany({})
 
     const passwordHash = await bcrypt.hash('sekret', 10)
-    const user = new User({ username: 'root', passwordHash })
+    const user = new User({ username: 'rootti', passwordHash })
 
     await user.save()
   })
@@ -145,8 +153,8 @@ describe('when there is initially one user at db', () => {
     const usersAtStart = await helper.usersInDb()
 
     const newUser = {
-      username: 'testi',
-      name: 'testi testinen',
+      username: 'matti_meikalainen',
+      name: 'Matti Meikäläinen',
       password: 'salainen',
     }
 
@@ -167,7 +175,7 @@ describe('when there is initially one user at db', () => {
     const usersAtStart = await helper.usersInDb()
 
     const newUser = {
-      username: 'root',
+      username: 'rootti',
       name: 'Superuser',
       password: 'salainen',
     }
